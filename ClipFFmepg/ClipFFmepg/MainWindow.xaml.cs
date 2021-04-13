@@ -4,7 +4,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,7 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using Xabe.FFmpeg;
 
-namespace ClipFFmepg
+namespace ClipFFmpeg
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -44,7 +43,6 @@ namespace ClipFFmepg
             Player.LoadedBehavior = MediaState.Manual;
             Player.UnloadedBehavior = MediaState.Manual;
             VideoLoaded = false;
-            //FFmpeg.SetExecutablesPath(@"C:\Users\Alexandre\Downloads\ffmpeg\bin");
 
             if (string.IsNullOrEmpty(Properties.Settings.Default.OutputDirectory))
             {
@@ -161,6 +159,18 @@ namespace ClipFFmepg
         private void OnMediaOpened(object sender, RoutedEventArgs e)
         {
             VideoLoaded = true;
+
+            if (Player.Source != null)
+            {
+                if (Player.NaturalDuration.HasTimeSpan)
+                {
+                    Timecode = String.Format("{0} / {1}", Player.Position.ToString(@"hh\:mm\:ss"), Player.NaturalDuration.TimeSpan.ToString(@"hh\:mm\:ss"));
+                    stopTime = Player.NaturalDuration.TimeSpan;
+                    StopTimeLabel = stopTime.ToString(@"hh\:mm\:ss");
+                    UpdateDuration();
+                }
+            }
+            
         }
 
         private void OnDrop(object sender, DragEventArgs e)
@@ -281,27 +291,30 @@ namespace ClipFFmepg
 
         private void ClipButtonClick(object sender, RoutedEventArgs e)
         {
-
-            //Player.Stop();
-            //Player.Close();
-            //string output = Path.ChangeExtension(Path.GetTempFileName(), ".mkv");
             StatusText = "Initializing...";
             Progress = 0;
             string outFile = $"{OutputDirectory}\\{OutputName}{Path.GetExtension(Source)}";
             string src = Source;
+            TimeSpan totalTime = Player.NaturalDuration.TimeSpan;
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    //IConversion conversion = await FFmpeg.Conversions.FromSnippet.Split(src, outFile, startTime, durationTime);
-                    IConversion conversion = FFmpeg.Conversions.New()
-                        .AddParameter($"-ss {startTime.ToString("hh\\:mm\\:ss")} -t {durationTime.ToString("hh\\:mm\\:ss")} -i \"{src}\" -acodec copy -vcodec copy \"{outFile}\"");
-                    conversion.OnProgress += OnConversionProgress;
-                    Dispatcher.Invoke(() => StatusText = "Creating clip");
-                    IConversionResult result = await conversion.Start();
-                    //var snippet = await FFmpeg.Conversions.FromSnippet.Convert(src, output);
-                    //IConversionResult result = await snippet.Start();
-                    UploadClip(outFile);
+                    // If the whole video is selected, upload source directly
+                    if (startTime.TotalMilliseconds < 1000 && (totalTime - stopTime).TotalMilliseconds < 1000)
+                    {
+                        UploadClip(src);
+                    }
+                    else
+                    {
+                        IConversion conversion = FFmpeg.Conversions.New()
+                            .AddParameter($"-ss {startTime.ToString("hh\\:mm\\:ss")} -t {durationTime.ToString("hh\\:mm\\:ss")} -i \"{src}\" -acodec copy -vcodec copy \"{outFile}\"");
+                        conversion.OnProgress += OnConversionProgress;
+                        Dispatcher.Invoke(() => StatusText = "Creating clip");
+                        IConversionResult result = await conversion.Start();
+                        UploadClip(outFile);
+                    }
+                    
                 }
                 catch (Exception exception)
                 {
@@ -359,8 +372,9 @@ namespace ClipFFmepg
             client.Timeout = -1;
             var request = new RestRequest(Method.POST);
             request.AddHeader("Authorization", $"Basic {encoded}");
-            //request.AddHeader("Cookie", "session=N46SCHDR14K5LVJ9JEDKSCCL");
             request.AddFile("file", file);
+            string requestBody = "{\"title\": \"" + Path.GetFileNameWithoutExtension(file) + "\"}";
+            request.AddParameter("title", Path.GetFileNameWithoutExtension(file));
             Dispatcher.Invoke(() => StatusText = "Uploading");
             IRestResponse response = client.Execute(request);
             var streamableResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<StreamableResponse>(response.Content);

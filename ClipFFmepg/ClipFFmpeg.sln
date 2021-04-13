@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30330.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClipFFmepg", "ClipFFmepg\ClipFFmepg.csproj", "{B2BB5888-B20A-4DAC-8E1A-0BFDEF5FC092}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClipFFmpeg", "ClipFFmepg\ClipFFmpeg.csproj", "{B2BB5888-B20A-4DAC-8E1A-0BFDEF5FC092}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
