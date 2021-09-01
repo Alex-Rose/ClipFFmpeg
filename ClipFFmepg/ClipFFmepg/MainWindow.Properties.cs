@@ -16,7 +16,6 @@ namespace ClipFFmpeg
             DependencyProperty.Register("Source", typeof(string), typeof(MainWindow), new PropertyMetadata(string.Empty));
 
 
-
         public string Timecode
         {
             get { return (string)GetValue(TimecodeProperty); }
@@ -148,6 +147,15 @@ namespace ClipFFmpeg
             DependencyProperty.Register("ClipEnabled", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
 
+        public Visibility DebugVisibility
+        {
+            get { return (Visibility)GetValue(DebugVisibilityProperty); }
+            set { SetValue(DebugVisibilityProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for DebugVisibility.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty DebugVisibilityProperty =
+            DependencyProperty.Register("DebugVisibility", typeof(Visibility), typeof(MainWindow), new PropertyMetadata(Visibility.Hidden));
 
         #endregion
 

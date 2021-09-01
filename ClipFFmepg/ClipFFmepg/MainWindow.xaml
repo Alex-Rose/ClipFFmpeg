@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ClipFFmpeg"
         mc:Ignorable="d"
-        Title="ClipFFmpeg" Height="949" Width="1297" AllowDrop="True"
+        Title="ClipFFmpeg" Height="1016" Width="1296" AllowDrop="True"
+        MinHeight="1016" MinWidth="1296"
         Closing="OnClosing"
         KeyDown="Window_KeyDown">
     <Window.Resources>
@@ -17,11 +18,11 @@
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <DockPanel
@@ -33,14 +34,20 @@
                 >
                 <MenuItem
                     Header="File"
-                    Click="UpdateCredentialsClick">Update Streamable credentials</MenuItem>
+                    Click="UpdateCredentialsClick">Update Streamable credentials
+                </MenuItem>
+                <MenuItem
+                    Visibility="{Binding DebugVisibility}"
+                    Header="Debug"
+                    Click="ClearCredentialsClick">Clear Streamable credentials
+                </MenuItem>
             </Menu>
         </DockPanel>
         <Grid
             Grid.Row="1"
             x:Name="MainGrid">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -48,7 +55,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            
+
             <MediaElement
                 Name="Player"
                 Grid.Row="0"
@@ -56,6 +63,7 @@
                 Height="720"
                 Width="1280"
                 Source="{Binding Source}"
+                HorizontalAlignment="Center"
                 Visibility="{Binding VideoLoaded, Converter={StaticResource BoolToVis}}"/>
 
             <Image
@@ -63,43 +71,50 @@
                 Grid.Column="0" 
                 Height="720"
                 Width="1280"
+                HorizontalAlignment="Center"
                 Source="{StaticResource ResourceKey=placeholder}"
-                Visibility="{Binding VideoLoaded, Converter={StaticResource BoolToNotVis}}"/>
+                Visibility="{Binding VideoLoaded, Converter={StaticResource BoolToNotVis}}"
+                KeyDown="Window_KeyDown"/>
 
             <StackPanel
-            Orientation="Horizontal"
-            Grid.Row="1"
-            Grid.Column="0">
+                Orientation="Horizontal"
+                Grid.Row="1"
+                Grid.Column="0"
+                HorizontalAlignment="Center">
                 <Slider
+                    Margin="0, 8"
                     Name="Slider"
                     HorizontalAlignment="Stretch"
                     ValueChanged="SliderValueChanged"
-                    Width="1230"
+                    Width="1214"
                     Minimum="0"
                     Maximum="100000"
                     PreviewMouseDown="Slider_PreviewMouseDown"
                     PreviewMouseUp="Slider_PreviewMouseUp"
+                    KeyDown="Window_KeyDown"
                 />
                 <Button
-                Width="50"
-                Content="{Binding PlayPause}"
-                Click="PlayPauseButtonClick"
+                    Width="50"
+                    Margin="0, 8"
+                    Content="{Binding PlayPause}"
+                    Click="PlayPauseButtonClick"
                 />
             </StackPanel>
 
             <Label
-            Grid.Row="2"
-            Grid.Column="0"
-            Content="{Binding Timecode}"
-            HorizontalAlignment="Center"
+                Grid.Row="2"
+                Grid.Column="0"
+                Content="{Binding Timecode}"
+                HorizontalAlignment="Center"
             />
             <Grid
-            Grid.Row="3"
-            Grid.Column="0">
+                Grid.Row="3"
+                Grid.Column="0"
+                Margin="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="2*" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -143,27 +158,44 @@
                 FontSize="18"
                 Content="{Binding ClipDurationLabel}" />
                 <StackPanel
-                Grid.Row="2"
-                Grid.Column="2"
-                HorizontalAlignment="Stretch">
-                <TextBox
-                    HorizontalAlignment="Stretch"
-                    MinWidth="100"
-                    MinHeight="15"
-                    Text="{Binding OutputName, Mode=TwoWay}"
-                />
+                    Grid.Row="2"
+                    Grid.Column="2"
+                    HorizontalAlignment="Stretch">
+                    <CheckBox 
+                        Content="Upload clip"
+                        IsChecked="True"/>
+                    <Separator></Separator>
+                    <CheckBox 
+                        Content="Save clip" />
+                    <Grid
+                        HorizontalAlignment="Stretch">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Label 
+                            Grid.Column="0"  
+                            Content="File name:" />
+                        <TextBox
+                            Grid.Column="1"
+                            HorizontalAlignment="Stretch"
+                            MinWidth="100"
+                            MinHeight="15"
+                            Text="{Binding OutputName, Mode=TwoWay}" />
+                    </Grid>
+
                     <StackPanel
                     Orientation="Horizontal"
                     HorizontalAlignment="Right">
                         <TextBlock
                         Text="{Binding OutputDirectory}"
                         HorizontalAlignment="Right"
-                        Margin="0,5"/>
+                        Margin="0,8"/>
                         <Button
                         Click="BrowserButtonClick"
                         HorizontalAlignment="Right"
                         Content="Browse"
-                        Margin="10,5"/>
+                        Margin="10,8,0,8"/>
                     </StackPanel>
 
                 </StackPanel>

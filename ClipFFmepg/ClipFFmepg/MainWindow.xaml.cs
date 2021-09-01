@@ -44,6 +44,10 @@ namespace ClipFFmpeg
             Player.UnloadedBehavior = MediaState.Manual;
             VideoLoaded = false;
 
+#if DEBUG
+            DebugVisibility = Visibility.Visible;
+#endif
+
             if (string.IsNullOrEmpty(Properties.Settings.Default.OutputDirectory))
             {
                 Properties.Settings.Default.OutputDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
@@ -115,12 +119,11 @@ namespace ClipFFmpeg
         {
             string currentDir = root != null ? root : Environment.CurrentDirectory;
 
-            string ffmpegPath = null;
             if (i < 2)
             {
                 foreach (var dir in Directory.GetDirectories(currentDir))
                 {
-                    ffmpegPath = LocateFFmpeg(i++, dir);
+                    string ffmpegPath = LocateFFmpeg(i + 1, dir);
                     if (ffmpegPath != null)
                     {
                         return ffmpegPath;
@@ -132,10 +135,10 @@ namespace ClipFFmpeg
             string lookupFFprobe = $"{currentDir}\\ffprobe.exe";
             if (File.Exists(lookupFFmpeg) && File.Exists(lookupFFprobe))
             {
-                ffmpegPath = currentDir;
+                return currentDir;
             }
 
-            return currentDir;
+            return null;
         }
 
         private async Task<bool> TryFFmpegBinaries()
@@ -307,6 +310,20 @@ namespace ClipFFmpeg
                     }
                     else
                     {
+                        if (File.Exists(outFile))
+                        {
+                            var dialogResult = MessageBox.Show($"{outFile} already exists, do you want to overwrite it?", $"File already exists", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                            if (dialogResult == MessageBoxResult.No)
+                            {
+                                Dispatcher.Invoke(() => StatusText = "File already exists");
+                                return;
+                            }
+                            else
+                            {
+                                File.Delete(outFile);
+                            }
+                        }
+
                         IConversion conversion = FFmpeg.Conversions.New()
                             .AddParameter($"-ss {startTime.ToString("hh\\:mm\\:ss")} -t {durationTime.ToString("hh\\:mm\\:ss")} -i \"{src}\" -acodec copy -vcodec copy \"{outFile}\"");
                         conversion.OnProgress += OnConversionProgress;
@@ -359,8 +376,11 @@ namespace ClipFFmpeg
             Dispatcher.Invoke(() => StatusText = "Preparing to upload...");
             if (!CredentialManager.Instance.IsSet)
             {
-                var credWindow = new CredentialWindow();
-                credWindow.ShowDialog();
+                Dispatcher.Invoke(() =>
+                {
+                    var credWindow = new CredentialWindow();
+                    credWindow.ShowDialog();
+                });
             }
 
             string username = CredentialManager.Instance.Username;
@@ -392,9 +412,19 @@ namespace ClipFFmpeg
             }
             else
             {
+                string errorMessage;
+                if (response.StatusCode == 0)
+                {
+                    errorMessage = "Error - Check Streamable credentials";
+                }
+                else
+                {
+                    errorMessage = $"Error - HTTP {response.StatusCode}";
+                }
+
                 Dispatcher.Invoke(() =>
                 {
-                    StatusText = "Error";
+                    StatusText = errorMessage;
                     Progress = 100;
                 });
             }
@@ -482,6 +512,11 @@ namespace ClipFFmpeg
                     Player.Position = newPosition;
                 }
             }
+        }
+
+        private void ClearCredentialsClick(object sender, RoutedEventArgs e)
+        {
+            CredentialManager.Instance.Clear();
         }
     }
 }

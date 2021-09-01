@@ -164,5 +164,11 @@ namespace ClipFFmpeg
                 throw;
             }
         }
+
+        internal void Clear()
+        {
+            Properties.Settings.Default.Username = string.Empty;
+            Properties.Settings.Default.Password = string.Empty;
+        }
     }
 }
